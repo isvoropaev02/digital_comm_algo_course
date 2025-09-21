@@ -116,6 +116,24 @@ class PSKModem:
         return self.__bits_per_symb
 
 
+class GaussFilter:
+    __pass_band_Hz = 0
+    h_impulse_response = np.array([])
+    __time_sample_ids = np.array([])
+
+    def __init__(self, symbol_time, samples_per_symbol, BT=0.3) -> None:
+        alpha = 1/BT*np.sqrt(np.log(2)/2)
+        self.__pass_band_Hz = BT/symbol_time
+        self.__time_sample_ids = np.linspace(-2, 2, 4*samples_per_symbol) # 4 signal lengths
+        self.h_impulse_response = np.sqrt(np.pi)/alpha*np.exp(-(np.pi*self.__time_sample_ids/alpha)**2)
+
+    @property
+    def get_pass_band_3dB(self) -> float:
+        return self.__pass_band_Hz
+    
+    def get_abs_time(self, symbol_rate):
+        return self.__time_sample_ids/symbol_rate
+    
 # bit_message = np.random.randint(low=0, high=2, size=24)
 # modem_block = PSKModem("qpsk")
 # symbols = modem_block.map_symbols(bit_message)
