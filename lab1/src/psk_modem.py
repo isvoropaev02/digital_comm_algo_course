@@ -1,4 +1,5 @@
 import numpy as np
+from copy import deepcopy
 
 class PSKModem:
 
@@ -63,17 +64,19 @@ class PSKModem:
             output_signal[j_symb*samples_per_symb:(j_symb+1)*samples_per_symb] = np.cos(phase+2*np.pi*fc_hz*time_samples/fs_hz)
         return output_signal
     
-    def demodulate(self, signal: np.ndarray, fs_hz, fc_hz, symb_rate_hz) -> np.ndarray:
+    def demodulate(self, signal: np.ndarray, fs_hz, fc_hz, symb_rate_hz) -> tuple[np.ndarray, dict]:
         samples_per_symb = int(fs_hz/symb_rate_hz)
         num_symb = int(len(signal)/samples_per_symb)
         output_bits = np.zeros(num_symb*self.__bits_per_symb, dtype=int)
         time_samples = np.arange(0, samples_per_symb, 1)
+        h_dict = deepcopy(self.__bit_symbol_map)
         for j_symb in range(num_symb):
             bits = np.array([])
-            h_target = np.array([])
+            h_target = 0
             for key_bits, ref_phase in self.__bit_symbol_map.items():
                 ref_wave = np.cos(ref_phase+2*np.pi*fc_hz*time_samples/fs_hz)
-                h_current = np.dot(signal[j_symb*samples_per_symb:(j_symb+1)*samples_per_symb], ref_wave)
+                h_current = np.dot(signal[j_symb*samples_per_symb:(j_symb+1)*samples_per_symb], ref_wave) / samples_per_symb
+                h_dict[key_bits] = h_current
                 if len(bits) == 0:
                     bits = np.array(list(key_bits))
                     h_target = h_current
@@ -82,7 +85,7 @@ class PSKModem:
                         bits = np.array(list(key_bits))
                         h_target = h_current
             output_bits[j_symb*self.__bits_per_symb:(j_symb+1)*self.__bits_per_symb] = bits
-        return output_bits
+        return output_bits, h_dict
     
     def padded_symbols(self, mes: np.ndarray, fs_hz, symb_rate_hz) -> np.ndarray:
         symbols = self.map_symbols(mes)
@@ -111,3 +114,20 @@ class PSKModem:
     @property
     def get_bits_per_symbol(self):
         return self.__bits_per_symb
+
+
+# bit_message = np.random.randint(low=0, high=2, size=24)
+# modem_block = PSKModem("qpsk")
+# symbols = modem_block.map_symbols(bit_message)
+# signal1 = modem_block.modulate(bit_message, 1000, 50, 10)
+# signal2 = modem_block.modulate(bit_message, 1000, 50, 15)
+# time_array1 = np.arange(0, len(signal1), 1) / 1000
+# time_array2 = np.arange(0, len(signal2), 1) / 1000
+# rec_bits1, metrics1 = modem_block.demodulate(signal1, 1000, 50, 10)
+# rec_bits2, metrics2 = modem_block.demodulate(signal2, 1000, 50, 15)
+# print('Bit message: ', *bit_message)
+# print('Modulation symbols: ', *np.round(symbols, 2))
+# print('Demodulated bits1: ', *rec_bits1)
+# print('Demodulated metrics1: ', metrics1, 2)
+# print('Demodulated bits2: ', *rec_bits2)
+# print('Demodulated metrics2: ', metrics2)
