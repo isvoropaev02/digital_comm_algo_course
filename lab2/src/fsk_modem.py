@@ -20,10 +20,13 @@ class GaussFilter:
 
 class FSKModem:
     __f_dev = 0
-    __phi_0 = 0
 
     def __init__(self, f_symb_hz: float, m=1):
         self.__f_dev = m / 4 * f_symb_hz
+
+    @property
+    def fdev_hz(self) -> float:
+        return self.__f_dev
 
     def FSK_complex_envelope(self, in_bits: np.ndarray, f_symb_hz: float, fs_hz: float) -> np.ndarray:
         samples_per_symbol = int(fs_hz/f_symb_hz)
@@ -55,7 +58,7 @@ class FSKModem:
         samples_per_symbol = int(fs_hz/f_symb_hz)
         total_samples = int(len(h_gaus)+(len(in_bits)-1)*samples_per_symbol)
         output_signal = np.ones(total_samples, dtype=np.complex128)
-        phases = np.zeros(total_samples, dtype=float)
+        phases = np.zeros(total_samples, dtype=np.float64)
         for j_symb in range(len(in_bits)):
             I_n = 1 - 2*in_bits[j_symb]
             for j_sample in range(len(h_gaus)):
