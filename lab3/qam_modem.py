@@ -1,6 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from typing import Tuple, Union, List
 
 class QAMModem:
     """
@@ -16,7 +15,8 @@ class QAMModem:
     def __gen_lut_tables(self, bits_per_sample: int = 2) -> np.ndarray:
         match bits_per_sample:
             case 1: # pi/2-bpsk
-                raise NotImplementedError("pi/2-bpsk not supported yet")
+                print("[WARNING] pi/2-bpsk not supported yet")
+                return self.__gen_lut_tables(2)
             case 2: # qpsk
                 return np.array([((1-2*(1&(id>>1))) + 1j*(1-2*(1&(id>>0)))) / np.sqrt(2) for id in range(2**2)], dtype=np.complex64)
             case 4: # qam16
@@ -36,6 +36,8 @@ class QAMModem:
                 return np.array([((1 - 2*((i >> 9) & 1)) * (16 - (1 - 2*((i >> 7) & 1)) * (8 - (1 - 2*((i >> 5) & 1)) * (4 - (1 - 2*((i >> 3) & 1)) * (2 - (1 - 2*((i >> 1) & 1)))))) + 
                                 1j * (1 - 2*((i >> 8) & 1)) * (16 - (1 - 2*((i >> 6) & 1)) * (8 - (1 - 2*((i >> 4) & 1)) * (4 - (1 - 2*((i >> 2) & 1)) * (2 - (1 - 2*((i >> 0) & 1))))))) / np.sqrt(682)
                                 for i in range(2**10)], dtype=np.complex64)
+            case _:
+                return np.array([0], dtype=np.complex64)
 
     def __from_int_to_bits(self, val: int) -> np.ndarray:
         out = np.zeros(self.__bits_per_sample, dtype=np.uint8)
@@ -80,11 +82,18 @@ class QAMModem:
     def _hard_demodulate(self, samples: np.ndarray) -> np.ndarray:
         distances = np.abs(samples[:, np.newaxis] - self.__lut_table)
         closest_indices = np.argmin(distances, axis=1)
-        print(closest_indices)
         return np.array([self.__from_int_to_bits(id) for id in closest_indices], dtype=np.int8).flatten()
     
     def _soft_demodulate(self, samples: np.ndarray) -> np.ndarray:
-        raise NotImplementedError("Not implemented yet")
+        distances = np.abs(samples[:, np.newaxis] - self.__lut_table)
+        closest_indices = np.argmin(distances, axis=1)
+        out_llrs = np.zeros(self.__bits_per_sample * closest_indices.shape[0], dtype=np.float32)
+        for j_sample in range(closest_indices.shape[0]):
+            out_bits = self.__from_int_to_bits(closest_indices[j_sample])
+            for j_bit in range(out_bits.shape[0]):
+                out_llrs[j_sample * self.__bits_per_sample + j_bit] \
+                        = np.exp(-distances[j_sample]**2) if out_bits == 0 else -np.exp(-distances[j_sample]**2)
+        return out_llrs
 
 # Демонстрация работы улучшенной визуализации
 if __name__ == "__main__":
