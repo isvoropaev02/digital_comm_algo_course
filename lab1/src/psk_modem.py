@@ -124,7 +124,7 @@ class GaussFilter:
     def __init__(self, symbol_time, samples_per_symbol, BT=0.3) -> None:
         alpha = 1/BT*np.sqrt(np.log(2)/2)
         self.__pass_band_Hz = BT/symbol_time
-        self.__time_sample_ids = np.linspace(-2, 2, 4*samples_per_symbol) # 4 signal lengths
+        self.__time_sample_ids = np.linspace(-4, 4, 8*samples_per_symbol) # 4 signal lengths
         self.h_impulse_response = np.sqrt(np.pi)/alpha*np.exp(-(np.pi*self.__time_sample_ids/alpha)**2)
 
     @property
@@ -133,6 +133,24 @@ class GaussFilter:
     
     def get_abs_time(self, symbol_rate):
         return self.__time_sample_ids/symbol_rate
+    
+
+class RaisedCosineFilter:
+    def __init__(self, samples_per_symbol: int, beta: float=0.35) -> None:
+        self.__beta = beta
+        self.__time_sample_ids = np.linspace(-4, 4, 8*samples_per_symbol, endpoint=False)
+        self.__h_impulse_response = np.sinc(self.__time_sample_ids) * np.cos(np.pi*self.__beta*self.__time_sample_ids) / (1 - (2*self.__beta*self.__time_sample_ids)**2)
+
+    @property
+    def h_impulse_response(self) -> np.ndarray:
+        return self.__h_impulse_response
+    
+    def get_shifted_time_samples(self) -> np.ndarray:
+        return self.__time_sample_ids
+    
+    def get_abs_time(self, symbol_rate):
+        return self.__time_sample_ids/symbol_rate
+
     
 # bit_message = np.random.randint(low=0, high=2, size=24)
 # modem_block = PSKModem("qpsk")
