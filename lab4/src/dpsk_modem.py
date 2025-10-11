@@ -61,7 +61,6 @@ class DPSKModem:
     def demodulate(self, samples: np.ndarray) -> np.ndarray:
         restored_phases = (np.round(np.angle(np.cumprod(samples)[1:]) / self.__base_phase)
                            % (2**self.__bits_per_sample)).astype(np.int8)
-        print(restored_phases)
         return np.array([self.__from_int_to_bits(np.where(self.__lut_table == int_phase)[0][0]) for int_phase in restored_phases], dtype=np.int8).flatten()
     
 

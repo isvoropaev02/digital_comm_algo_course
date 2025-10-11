@@ -1,4 +1,5 @@
 import numpy as np
+from src.dpsk_modem import DPSKModem
 
 class OFDMModem:
     def __init__(self, num_sc: int = 1) -> None:
@@ -23,6 +24,25 @@ class OFDMModem:
         # trimed_signal = signal[(self.__cp_len // 2) : len(signal) + (-self.__cp_len // 2)]
         trimed_signal = signal[self.__cp_len:]
         return np.fft.fft(trimed_signal, norm='ortho')
+    
+    def process_tx(self, in_bits: np.ndarray, modem_block: DPSKModem, num_symb: int) -> np.ndarray:
+        bits_per_symb = modem_block.bits_per_sample * (self.__num_sc - 1)
+        if len(in_bits) != bits_per_symb*num_symb:
+            raise ValueError(f"Invalid len(in_bits)={len(in_bits)}, the value should be equal to {bits_per_symb*num_symb}")
+        tx_out_signal = np.array([], dtype=np.complex128)
+        for j_symb in range(num_symb):
+            fd_samples = modem_block.modulate(in_bits[j_symb * bits_per_symb : (j_symb+1) * bits_per_symb])
+            tx_out_signal = np.concatenate([tx_out_signal, self.ofdm_modulate(fd_samples)])
+        return tx_out_signal
+    
+    def process_rx(self, rx_signal: np.ndarray, modem_block: DPSKModem, num_symb: int) -> np.ndarray:
+        samples_per_symb = self.__num_sc + self.__cp_len
+        rx_out_bits = np.array([], dtype=np.int8)
+        for j_symb in range(num_symb):
+            fd_samples = self.ofdm_demodulate(rx_signal[j_symb * samples_per_symb : (j_symb+1) * samples_per_symb])
+            rx_out_bits = np.concatenate([rx_out_bits, modem_block.demodulate(fd_samples)])
+        return rx_out_bits
+    
 
 
 if __name__ == "__main__":
