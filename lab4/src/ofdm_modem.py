@@ -16,31 +16,60 @@ class OFDMModem:
         return self.__cp_len
     
 
-    def ofdm_modulate(self, samples: np.ndarray) -> np.ndarray:
-        td_signal = np.fft.ifft(samples, norm='ortho')
-        return np.concat([td_signal[len(td_signal)-self.__cp_len:], td_signal])
+    def ofdm_modulate(self, samples: np.ndarray, fs_hz: int=-1, scs_hz: int = 15) -> np.ndarray:
+        if fs_hz == -1:
+            fft_samples = samples
+            cp_len = self.__cp_len
+        else:
+            nfft = int(fs_hz/scs_hz)
+            cp_len = int(nfft * 0.2)
+            fft_samples = np.zeros(nfft, dtype=np.complex128)
+            fft_samples[:self.__num_sc//2] = samples[:self.__num_sc//2]
+            fft_samples[-self.__num_sc//2:] = samples[-self.__num_sc//2:]
+        td_signal = np.fft.ifft(fft_samples, norm='ortho')
+        return np.concat([td_signal[len(td_signal)-cp_len:], td_signal])
     
-    def ofdm_demodulate(self, signal: np.ndarray) -> np.ndarray:
+    def ofdm_demodulate(self, signal: np.ndarray, fs_hz: int=-1, scs_hz: int = 15) -> np.ndarray:
         # trimed_signal = signal[(self.__cp_len // 2) : len(signal) + (-self.__cp_len // 2)]
-        trimed_signal = signal[self.__cp_len:]
-        return np.fft.fft(trimed_signal, norm='ortho')
+        if fs_hz == -1:
+            fft_samples = signal
+            cp_len = self.__cp_len
+        else:
+            nfft = int(fs_hz/scs_hz)
+            cp_len = int(nfft * 0.2)
+        trimed_signal = signal[cp_len:]
+        fd_signal = np.fft.fft(trimed_signal, norm='ortho')
+        fft_samples = np.zeros(self.__num_sc, dtype=np.complex128)
+        fft_samples[:self.__num_sc//2] = fd_signal[:self.__num_sc//2]
+        fft_samples[-self.__num_sc//2:] = fd_signal[-self.__num_sc//2:]
+        return fft_samples
     
-    def process_tx(self, in_bits: np.ndarray, modem_block: DPSKModem, num_symb: int) -> np.ndarray:
-        bits_per_symb = modem_block.bits_per_sample * (self.__num_sc - 1)
-        if len(in_bits) != bits_per_symb*num_symb:
-            raise ValueError(f"Invalid len(in_bits)={len(in_bits)}, the value should be equal to {bits_per_symb*num_symb}")
+    def process_tx(self, in_bits: np.ndarray, modem_block: DPSKModem, num_symb: int, fs_hz: int=-1, scs_hz: int = 15) -> np.ndarray:
+        bits_per_sc = modem_block.bits_per_sample * (num_symb - 1)
+        if len(in_bits) != bits_per_sc*self.__num_sc:
+            raise ValueError(f"Invalid len(in_bits)={len(in_bits)}, the value should be equal to {bits_per_sc*num_symb}")
+        
+        tx_grid = np.zeros(shape=(self.__num_sc, num_symb), dtype=np.complex128)
+        for j_sc in range(self.__num_sc):
+            tx_grid[j_sc, :] = modem_block.modulate(in_bits[j_sc * bits_per_sc : (j_sc+1) * bits_per_sc])
         tx_out_signal = np.array([], dtype=np.complex128)
         for j_symb in range(num_symb):
-            fd_samples = modem_block.modulate(in_bits[j_symb * bits_per_symb : (j_symb+1) * bits_per_symb])
-            tx_out_signal = np.concatenate([tx_out_signal, self.ofdm_modulate(fd_samples)])
+            tx_out_signal = np.concatenate([tx_out_signal, self.ofdm_modulate(tx_grid[:, j_symb], fs_hz, scs_hz)])
         return tx_out_signal
     
-    def process_rx(self, rx_signal: np.ndarray, modem_block: DPSKModem, num_symb: int) -> np.ndarray:
-        samples_per_symb = self.__num_sc + self.__cp_len
+    def process_rx(self, rx_signal: np.ndarray, modem_block: DPSKModem, num_symb: int, fs_hz: int=-1, scs_hz: int = 15) -> np.ndarray:
         rx_out_bits = np.array([], dtype=np.int8)
+        if fs_hz == -1:
+            samples_per_symb = self.__num_sc + self.__cp_len
+        else:
+            nfft = int(fs_hz/scs_hz)
+            cp_len = int(nfft * 0.2)
+            samples_per_symb = cp_len + nfft
+        rx_grid = np.zeros(shape=(self.__num_sc, num_symb), dtype=np.complex128)
         for j_symb in range(num_symb):
-            fd_samples = self.ofdm_demodulate(rx_signal[j_symb * samples_per_symb : (j_symb+1) * samples_per_symb])
-            rx_out_bits = np.concatenate([rx_out_bits, modem_block.demodulate(fd_samples)])
+            rx_grid[:,j_symb] = self.ofdm_demodulate(rx_signal[j_symb * samples_per_symb : (j_symb+1) * samples_per_symb], fs_hz, scs_hz)
+        for j_sc in range(self.__num_sc):
+            rx_out_bits = np.concatenate([rx_out_bits, modem_block.demodulate(rx_grid[j_sc, :])])
         return rx_out_bits
     
 
