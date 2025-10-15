@@ -35,6 +35,10 @@ class DPSKModem:
     def lut_table(self) -> np.ndarray:
         return self.__lut_table
     
+    @property
+    def base_phase(self) -> float:
+        return self.__base_phase
+    
 
     def modulate(self, bits: np.ndarray) -> np.ndarray:
         if len(bits) % self.__bits_per_sample != 0:
@@ -55,12 +59,13 @@ class DPSKModem:
         
 
         self.__ref_mod_phase_id = (self.__ref_mod_phase_id + 1) % (2 ** self.__bits_per_sample)
-        return np.exp(1j * self.__base_phase * np.diff(out_phases, prepend=np.array([0], dtype=np.int8)), dtype=np.complex64)
+        return np.exp(1j * self.__base_phase * (np.cumsum(out_phases)%(2 ** self.__bits_per_sample)), dtype=np.complex64)
 
     
     def demodulate(self, samples: np.ndarray) -> np.ndarray:
-        restored_phases = (np.round(np.angle(np.cumprod(samples)[1:]) / self.__base_phase)
-                           % (2**self.__bits_per_sample)).astype(np.int8)
+        # restored_phases = (np.round(np.angle(np.cumprod(samples)[1:]) / self.__base_phase)
+        #                    % (2**self.__bits_per_sample)).astype(np.int8)
+        restored_phases = (np.round(np.diff(np.angle(samples) / self.__base_phase)) % (2 ** self.__bits_per_sample)).astype(np.int8)
         return np.array([self.__from_int_to_bits(np.where(self.__lut_table == int_phase)[0][0]) for int_phase in restored_phases], dtype=np.int8).flatten()
     
 
@@ -92,6 +97,6 @@ if __name__ == "__main__":
     bits_dict = dict()
     for name, modulator in modulators.items():
         print(f"\n{name}:")
-        bits_dict[name] = modulator.demodulate(samples_dict[name])
+        bits_dict[name] = modulator.demodulate(samples_dict[name] * (1-1j))
         print(f"Received bits: {bits_dict[name]}")
         print(f"Correct: {np.array_equal(test_bits, bits_dict[name])}")
