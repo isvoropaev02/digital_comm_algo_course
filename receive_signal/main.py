@@ -16,4 +16,4 @@ plot_signal(in_rx_signal, name="In signal", xlabel="Time [sec]", x_scale_coef=1 
 # equalization
 # demodulation
 # deinterleaving
-# decoding
+# FEC decoding

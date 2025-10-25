@@ -53,8 +53,7 @@ class PSKModem:
                 sample_idx += bit * (1 << (self.__bits_per_sample - 1 - j))
                 out_phases[j_samlpe] = self.__lut_table[sample_idx]
 
-        # return np.exp(1j * self.__base_phase * out_phases, dtype=np.complex64)
-        return out_phases
+        return np.exp(1j * self.__base_phase * out_phases, dtype=np.complex64)
 
 
 if __name__ == "__main__":
