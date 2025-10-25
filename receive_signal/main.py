@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # configuration
-cfg = ConfigParams(fs_hz=16000, fc_hz=0, f_symb_hz=1800, mod_order=3)
+cfg = ConfigParams(fs_hz=16000, fc_hz=0, f_symb_hz=1800)
 
 # signal receiving
 in_rx_signal = np.load("receive_signal/src/arinc_2021_09_15.npy")
