@@ -55,6 +55,13 @@ class PSKModem:
 
         return np.exp(1j * self.__base_phase * out_phases, dtype=np.complex64)
 
+    def demodulate(self, samples: np.ndarray) -> np.ndarray:
+        restored_phases = (np.round(np.angle(samples) / self.__base_phase) % (2**self.__bits_per_sample)).astype(np.int8)
+        return np.array(
+            [self.__from_int_to_bits(np.where(self.__lut_table == int_phase)[0][0]) for int_phase in restored_phases],
+            dtype=np.int8,
+        ).flatten()
+
 
 if __name__ == "__main__":
     modulators = {
@@ -80,9 +87,9 @@ if __name__ == "__main__":
         samples_dict[name] = modulator.modulate(test_bits)
         print(f"Samples: {samples_dict[name]}")
 
-    # bits_dict = dict()
-    # for name, modulator in modulators.items():
-    #     print(f"\n{name}:")
-    #     bits_dict[name] = modulator.demodulate(samples_dict[name] * (1 - 1j))
-    #     print(f"Received bits: {bits_dict[name]}")
-    #     print(f"Correct: {np.array_equal(test_bits, bits_dict[name])}")
+    bits_dict = dict()
+    for name, modulator in modulators.items():
+        print(f"\n{name}:")
+        bits_dict[name] = modulator.demodulate(samples_dict[name])
+        print(f"Received bits: {bits_dict[name]}")
+        print(f"Correct: {np.array_equal(test_bits, bits_dict[name])}")
