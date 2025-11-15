@@ -18,3 +18,4 @@ preamb_detector = PreambuleDetector(fs_hz=cfg.fs_hz, fsymb_hz=cfg.fsymb_hz)
 pr_dec_out_signal, data_rate, interleaver_dur = preamb_detector.process(in_rx_signal)
 
 # equalization
+plot_signal(pr_dec_out_signal)

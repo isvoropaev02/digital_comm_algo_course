@@ -16,7 +16,7 @@ class PSKModem:
             case 2:  # qpsk
                 return np.array([0, 1, 3, 2], dtype=np.int8)
             case 3:  # 8psk
-                return np.array([0, 1, 3, 2, 7, 6, 4, 5], dtype=np.int8)
+                return np.array([0, 1, 3, 2, 6, 7, 4, 5], dtype=np.int8)
             case _:
                 return np.array([0], dtype=np.int8)
 
