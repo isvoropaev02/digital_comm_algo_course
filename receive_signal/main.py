@@ -12,9 +12,9 @@ cfg = ConfigParams(fs_hz=7200, fsymb_hz=1800)
 # signal receiving
 in_rx_signal = np.load("receive_signal/src/trim_s69000_e85500_fs7200.npy").flatten()
 time_s = np.arange(in_rx_signal.shape[0]) / cfg.fs_hz
-print(in_rx_signal.dtype)
-print(in_rx_signal.shape)
 
-# clock synchronization / data rate derivation
+# clock synchronization / data rate and interleaver derivation
 preamb_detector = PreambuleDetector(fs_hz=cfg.fs_hz, fsymb_hz=cfg.fsymb_hz)
-preamb_detector.process(in_rx_signal)
+pr_dec_out_signal, data_rate, interleaver_dur = preamb_detector.process(in_rx_signal)
+
+# equalization

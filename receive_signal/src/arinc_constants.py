@@ -73,6 +73,9 @@ PREAMBULE_M = np.array([0, 1, 1,
                         0, 1, 1, 1,
                         1, 1, 1, 1], dtype=np.int8)
 
+M_SHIFT_LUT = np.array([72, 82, 113, 123, 61, 103, 93, 9], dtype=np.int32)
+DATA_RATE_LUT = np.array([300, 600, 1200, 1800], dtype=np.int32)
+
 # fmt: on
 if __name__ == "__main__":
     assert len(PREAMBULE_A) == 127
