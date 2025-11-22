@@ -6,28 +6,19 @@ from scipy.signal import decimate
 
 
 class Equalizer:
-    def __init__(self, fs_hz: int, fsymb_hz: int) -> None:
-        psk_modem = PSKModem(bits_per_sample=1)
-        self.__mod_probe_seq = psk_modem.modulate(PROBE_SEQ)
-        self.__samples_per_symb = int(fs_hz / fsymb_hz)
+    def __init__(self, mu: float = 0.1, filter_order: int = 15) -> None:
         self.__mu = 0.1
-        self.__lmb = 0.98
-        self.__filt_order = 15
-        self.__dfe_order = 6
+        self.__eq_w = np.zeros(filter_order)
+        self.__x_buff = np.zeros(self.__eq_w.shape[0], dtype=np.complex64)
         self.__pmod = PSKModem(bits_per_sample=1)
-        self.__eq_w = np.zeros(self.__filt_order)
-
-    @property
-    def samples_per_symb(self) -> int:
-        return self.__samples_per_symb
 
     @property
     def mu(self) -> float:
         return self.__mu
 
     @property
-    def lmb(self) -> float:
-        return self.__lmb
+    def filter_order(self) -> float:
+        return self.__eq_w.shape[0]
 
     def process(self, in_samples: np.ndarray, shift: int) -> None:
         ref_samples = self.__form_ref_samples(shift=shift)
@@ -42,10 +33,12 @@ class Equalizer:
 
     def __train_filter(self, in_samples: np.ndarray, ref_samples: np.ndarray) -> None:  # using RLS algorithm
         assert in_samples.shape == ref_samples.shape
-        x_arr = np.zeros(self.__eq_w.shape[0], dtype=np.complex64)
         for j_smp in range(len(in_samples)):
-            x_arr[-1] = in_samples[0]
-            y = np.inner(np.conj(self.__eq_w), x_arr)
+            self.__x_buff[-1] = in_samples[0]
+            y = np.inner(np.conj(self.__eq_w), self.__x_buff)
             err = y - ref_samples[j_smp]
-            self.__eq_w = self.__eq_w - self.__mu * x_arr[-1] * np.conj(err)
-            x_arr = np.roll(x_arr, -1)
+            self.__eq_w = self.__eq_w - self.__mu * self.__x_buff[-1] * np.conj(err)
+            self.__x_buff = np.roll(self.__x_buff, -1)
+
+    def __process_equalization(self, in_samples: np.ndarray) -> None:
+        pass
