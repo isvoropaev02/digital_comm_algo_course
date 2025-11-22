@@ -23,10 +23,10 @@ class PreambuleDetector:
         id_shift = np.argmin(np.abs(m_shift - M_SHIFT_LUT))
         out_data_rate = DATA_RATE_LUT[id_shift % 4]
         out_interleaver_dur = 1.8 if (id_shift // 2 == 0) else 4.2
-        out_trimed_signal = in_signal[a1_idx + (2 * 127 + 15) * self.__samples_per_symb :]
+        out_symbols = in_signal[a0_idx :: self.__samples_per_symb]
         print("shift: ", m_shift, " id: ", id_shift)
         print("interl: ", out_interleaver_dur, " dr: ", out_data_rate)
-        return (out_trimed_signal, out_data_rate, out_interleaver_dur)
+        return (out_symbols, out_data_rate, out_interleaver_dur)
 
     def __get_preambule_a_start_pos(self, in_signal: np.ndarray) -> np.ndarray:
         preambule_a_modulated = np.repeat(self.__psk_modem.modulate(PREAMBULE_A), self.__samples_per_symb).astype(np.complex128)
