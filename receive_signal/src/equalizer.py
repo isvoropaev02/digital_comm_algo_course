@@ -22,6 +22,16 @@ class Equalizer:
 
     def process(self, in_samples: np.ndarray, shift: int, data_len: int) -> np.ndarray:
         ref_samples = self.__form_ref_samples(shift=shift)
+
+        # debug
+        corr_a = np.correlate(in_samples, ref_samples, "full")
+        import matplotlib.pyplot as plt
+
+        plt.figure()
+        plt.plot(np.arange(len(corr_a)) - len(ref_samples) + 1, np.abs(corr_a))
+        plt.grid()
+        plt.show()
+
         train_samples = in_samples[: ref_samples.shape[0]]
         self.__train_filter(train_samples, ref_samples)
         samples_wo_preambule = in_samples[ref_samples.shape[0] :]
@@ -32,7 +42,7 @@ class Equalizer:
         full_preambule = np.concatenate([PREAMBULE_A, PREAMBULE_A, shifted_m_seq, shifted_m_seq[:15], np.tile(PROBE_SEQ, 9)])
         return self.__pmod.modulate(full_preambule)
 
-    def __train_filter(self, in_samples: np.ndarray, ref_samples: np.ndarray) -> None:  # using RLS algorithm
+    def __train_filter(self, in_samples: np.ndarray, ref_samples: np.ndarray) -> None:
         assert in_samples.shape == ref_samples.shape
         for j_smp in range(len(in_samples)):
             self.__x_buff[-1] = in_samples[0]
@@ -42,7 +52,7 @@ class Equalizer:
             self.__x_buff = np.roll(self.__x_buff, -1)
 
     def __equalize_data_group(self, in_samples: np.ndarray) -> np.ndarray:
-        assert in_samples.shape[0] == 45
+        assert in_samples.shape[0] == 45, f"got: {in_samples.shape[0]}"
         in_data = in_samples[:30]
         out_data = np.zeros_like(in_data)
         for j_smp in range(len(in_data)):
@@ -56,5 +66,5 @@ class Equalizer:
         num_data_groups = int(data_len / 45)
         out_data_samples = np.zeros(30 * num_data_groups, dtype=np.complex64)
         for j_gr in range(num_data_groups):
-            out_data_samples[j_gr * 30 : (j_gr + 1) * 30] = self.__equalize_data_group(in_samples[j_gr * 30 : (j_gr + 1) * 30])
+            out_data_samples[j_gr * 30 : (j_gr + 1) * 30] = self.__equalize_data_group(in_samples[j_gr * 45 : (j_gr + 1) * 45])
         return out_data_samples

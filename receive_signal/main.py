@@ -18,9 +18,13 @@ time_s = np.arange(in_rx_signal.shape[0]) / cfg.fs_hz
 
 # clock synchronization / data rate and interleaver derivation
 pr_dec_out_signal, data_rate, interleaver_dur, shift = preamb_detector.process(in_rx_signal)
-plot_signal(pr_dec_out_signal)
+# plot_signal(pr_dec_out_signal)
+print(pr_dec_out_signal.shape)
+print(int(interleaver_dur / 25 * 45))
 
 # equalization
-eq_out_samples = equalizer.process(
-    pr_dec_out_signal, shift, int(interleaver_dur * cfg.fsymb_hz / preamb_detector.samples_per_symb)
-)
+eq_out_samples = equalizer.process(pr_dec_out_signal, shift, int(interleaver_dur / 25 * 45))
+
+plt.figure()
+plt.scatter(np.real(eq_out_samples), np.imag(eq_out_samples))
+plt.show()
