@@ -76,7 +76,7 @@ class Equalizer:
 
     def run_ut(self) -> None:
         self.reset_filters()
-        in_samples = np.concat([self.__form_ref_samples(shift=72), self.__form_ref_samples(shift=72)])
+        in_samples = np.concat([self.__form_ref_samples(shift=72) * 0.1, self.__form_ref_samples(shift=72) * 0.1])
         ref_samples = self.__form_ref_samples(shift=72)
 
         # debug
@@ -99,5 +99,7 @@ class Equalizer:
             self.__x_buff = np.roll(self.__x_buff, -1)
 
         plt.figure()
-        plt.scatter(np.real(out_data), np.imag(out_data))
+        plt.scatter(np.real(out_data), np.imag(out_data), label="res")
+        plt.scatter(np.real(ref_samples), np.imag(ref_samples), label="ref")
+        plt.ylim([-0.1, 0.1])
         plt.show()

@@ -11,7 +11,7 @@ from numpy.fft import fft, ifft
 # configuration
 cfg = ConfigParams(fs_hz=7200, fsymb_hz=1800)
 preamb_detector = PreambuleDetector(fs_hz=cfg.fs_hz, fsymb_hz=cfg.fsymb_hz)
-equalizer = Equalizer(mu=0.01, filter_order=15)
+equalizer = Equalizer(mu=0.1, filter_order=25)
 dec_chain = Rate300DecChain()
 
 # signal receiving
