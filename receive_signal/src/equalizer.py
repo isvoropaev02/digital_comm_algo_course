@@ -6,11 +6,14 @@ import numpy as np
 
 class Equalizer:
     def __init__(self, mu: float = 0.1, filter_order: int = 15) -> None:
-        self.__mu = 0.1
-        self.__eq_w = np.zeros(filter_order)
+        self.__mu = mu
+        self.__eq_w = np.zeros(filter_order, dtype=np.complex64)
         self.__x_buff = np.zeros(self.__eq_w.shape[0], dtype=np.complex64)
         self.__pmod = PSKModem(bits_per_sample=1)
         self.__probe_seq_mod = self.__pmod.modulate(PROBE_SEQ)
+
+    def reset_filters(self) -> None:
+        self.__init__(self.mu, self.__eq_w.shape[0])
 
     @property
     def mu(self) -> float:
@@ -24,11 +27,12 @@ class Equalizer:
         ref_samples = self.__form_ref_samples(shift=shift)
 
         # debug
-        corr_a = np.correlate(in_samples, ref_samples, "full")
+        corr_a = np.correlate(in_samples, ref_samples, "valid")
         import matplotlib.pyplot as plt
 
         plt.figure()
-        plt.plot(np.arange(len(corr_a)) - len(ref_samples) + 1, np.abs(corr_a))
+        plt.plot(np.arange(len(corr_a)), np.abs(corr_a))
+        plt.title("Equalizer_correlation")
         plt.grid()
         plt.show()
 
@@ -47,8 +51,9 @@ class Equalizer:
         for j_smp in range(len(in_samples)):
             self.__x_buff[-1] = in_samples[0]
             y = np.inner(np.conj(self.__eq_w), self.__x_buff)
-            err = y - ref_samples[j_smp]
-            self.__eq_w = self.__eq_w - self.__mu * self.__x_buff[-1] * np.conj(err)
+            err = ref_samples[j_smp] - y
+            print(j_smp, "  ", self.__eq_w)
+            self.__eq_w = self.__eq_w + self.__mu * self.__x_buff * np.conj(err)
             self.__x_buff = np.roll(self.__x_buff, -1)
 
     def __equalize_data_group(self, in_samples: np.ndarray) -> np.ndarray:
@@ -56,7 +61,7 @@ class Equalizer:
         in_data = in_samples[:30]
         out_data = np.zeros_like(in_data)
         for j_smp in range(len(in_data)):
-            self.__x_buff[-1] = in_samples[0]
+            self.__x_buff[-1] = in_data[j_smp]
             out_data[j_smp] = np.inner(np.conj(self.__eq_w), self.__x_buff)
             self.__x_buff = np.roll(self.__x_buff, -1)
         self.__train_filter(in_samples[30:], self.__probe_seq_mod)
@@ -68,3 +73,31 @@ class Equalizer:
         for j_gr in range(num_data_groups):
             out_data_samples[j_gr * 30 : (j_gr + 1) * 30] = self.__equalize_data_group(in_samples[j_gr * 45 : (j_gr + 1) * 45])
         return out_data_samples
+
+    def run_ut(self) -> None:
+        self.reset_filters()
+        in_samples = np.concat([self.__form_ref_samples(shift=72), self.__form_ref_samples(shift=72)])
+        ref_samples = self.__form_ref_samples(shift=72)
+
+        # debug
+        corr_a = np.correlate(in_samples, ref_samples, "valid")
+        import matplotlib.pyplot as plt
+
+        plt.figure()
+        plt.plot(np.arange(len(corr_a)), np.abs(corr_a))
+        plt.title("Equalizer_correlation")
+        plt.grid()
+        plt.show()
+
+        train_samples = in_samples[: ref_samples.shape[0]]
+        self.__train_filter(train_samples, ref_samples)
+        samples_wo_preambule = in_samples[ref_samples.shape[0] :]
+        out_data = np.zeros_like(samples_wo_preambule)
+        for j_smp in range(len(samples_wo_preambule)):
+            self.__x_buff[-1] = samples_wo_preambule[j_smp]
+            out_data[j_smp] = np.inner(np.conj(self.__eq_w), self.__x_buff)
+            self.__x_buff = np.roll(self.__x_buff, -1)
+
+        plt.figure()
+        plt.scatter(np.real(out_data), np.imag(out_data))
+        plt.show()

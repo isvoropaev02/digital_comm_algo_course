@@ -31,16 +31,16 @@ class PreambuleDetector:
         #     np.concatenate([PREAMBULE_A, PREAMBULE_A, shifted_m_seq, shifted_m_seq[:15], np.tile(PROBE_SEQ, 9)])
         # )
         # # full_preambule = self.__pmod.modulate(PREAMBULE_A)
-        # corr_a = np.correlate(out_symbols, full_preambule, "full")
+        # corr_a = np.correlate(out_symbols, full_preambule, "valid")
         # import matplotlib.pyplot as plt
 
         # plt.figure()
-        # plt.plot(np.arange(len(corr_a)) - len(full_preambule) + 1, np.abs(corr_a))
-        # plt.title("pr detector")
+        # plt.plot(np.arange(len(corr_a)), np.abs(corr_a))
+        # plt.title("pr detector corr out")
         # plt.grid()
         # plt.show()
-        print("shift: ", m_shift, " id: ", id_shift)
-        print("interl: ", out_interleaver_dur, " dr: ", out_data_rate)
+        # print("shift: ", m_shift, " id: ", id_shift)
+        # print("interl: ", out_interleaver_dur, " dr: ", out_data_rate)
 
         return (out_symbols, out_data_rate, out_interleaver_dur, M_SHIFT_LUT[id_shift])
 
@@ -58,13 +58,13 @@ class PreambuleDetector:
         ## simple correlation
         corr_m = np.correlate(signal_m_part, np.concat([preambule_m_modulated, preambule_m_modulated]), "full")
 
-        import matplotlib.pyplot as plt
+        # import matplotlib.pyplot as plt
 
-        plt.figure()
-        plt.plot(np.arange(len(corr_m)) - (2 * len(PREAMBULE_M) * self.__samples_per_symb - 1), np.abs(corr_m))
-        plt.title("correlation")
-        plt.grid()
-        plt.show()
+        # plt.figure()
+        # plt.plot(np.arange(len(corr_m)) - (2 * len(PREAMBULE_M) * self.__samples_per_symb - 1), np.abs(corr_m))
+        # plt.title("Pr detector correlation")
+        # plt.grid()
+        # plt.show()
         max_idx = np.argmax(np.abs(corr_m)) - (2 * len(PREAMBULE_M) * self.__samples_per_symb - 1)
         shift = int((self.__samples_per_symb * len(PREAMBULE_M) - max_idx) / self.__samples_per_symb)
         return shift
