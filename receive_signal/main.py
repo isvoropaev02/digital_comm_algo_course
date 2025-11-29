@@ -28,6 +28,7 @@ print("num_eq_in_samples: ", int(interleaver_dur / 25 * 45))
 
 # # equalization
 eq_out_samples = equalizer.process(pr_dec_out_signal, shift, int(interleaver_dur / 25 * 45))
+print("out_eq_samples_size: ", eq_out_samples.shape[0])
 plt.figure()
 plt.scatter(np.real(eq_out_samples), np.imag(eq_out_samples))
 plt.title("Post-Eq constellation")
@@ -36,3 +37,8 @@ plt.ylabel("Q")
 plt.grid()
 plt.show()
 # equalizer.run_ut()
+
+# rate-300 decoding chain
+info_bits = dec_chain.process(in_samples=eq_out_samples)
+print("info_bits_size: ", info_bits.shape[0])
+print(info_bits)

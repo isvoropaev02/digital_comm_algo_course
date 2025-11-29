@@ -50,4 +50,5 @@ class Rate300DecChain:
         return self.__pmod.demodulate(combined_samples)
 
     def __fec_decode(self, in_bits: np.ndarray) -> np.ndarray:
+        print(in_bits.shape)
         return self.__conv_decoder.viterbi_decoder(in_bits, metric_type="hard")
