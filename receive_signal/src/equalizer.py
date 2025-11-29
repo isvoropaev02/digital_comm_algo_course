@@ -26,15 +26,15 @@ class Equalizer:
     def process(self, in_samples: np.ndarray, shift: int, data_len: int) -> np.ndarray:
         ref_samples = self.__form_ref_samples(shift=shift)
 
-        # debug
-        corr_a = np.correlate(in_samples, ref_samples, "valid")
-        import matplotlib.pyplot as plt
+        # # debug
+        # corr_a = np.correlate(in_samples, ref_samples, "valid")
+        # import matplotlib.pyplot as plt
 
-        plt.figure()
-        plt.plot(np.arange(len(corr_a)), np.abs(corr_a))
-        plt.title("Equalizer_correlation")
-        plt.grid()
-        plt.show()
+        # plt.figure()
+        # plt.plot(np.arange(len(corr_a)), np.abs(corr_a))
+        # plt.title("Equalizer_correlation")
+        # plt.grid()
+        # plt.show()
 
         train_samples = in_samples[: ref_samples.shape[0]]
         self.__train_filter(train_samples, ref_samples)
@@ -48,13 +48,15 @@ class Equalizer:
 
     def __train_filter(self, in_samples: np.ndarray, ref_samples: np.ndarray) -> None:
         assert in_samples.shape == ref_samples.shape
+        print("Start training")
         for j_smp in range(len(in_samples)):
-            self.__x_buff[-1] = in_samples[0]
+            self.__x_buff[-1] = in_samples[j_smp]
             y = np.inner(np.conj(self.__eq_w), self.__x_buff)
             err = ref_samples[j_smp] - y
-            print(j_smp, "  ", self.__eq_w)
+            print(np.abs(err))
             self.__eq_w = self.__eq_w + self.__mu * self.__x_buff * np.conj(err)
             self.__x_buff = np.roll(self.__x_buff, -1)
+        print("End training")
 
     def __equalize_data_group(self, in_samples: np.ndarray) -> np.ndarray:
         assert in_samples.shape[0] == 45, f"got: {in_samples.shape[0]}"
@@ -76,7 +78,9 @@ class Equalizer:
 
     def run_ut(self) -> None:
         self.reset_filters()
-        in_samples = np.concat([self.__form_ref_samples(shift=72) * 0.1, self.__form_ref_samples(shift=72) * 0.1])
+        in_samples = np.concat(
+            [self.__form_ref_samples(shift=72) * (0.5 + 0.5j), self.__form_ref_samples(shift=72) * (0.5 + 0.5j)]
+        )
         ref_samples = self.__form_ref_samples(shift=72)
 
         # debug
@@ -100,6 +104,6 @@ class Equalizer:
 
         plt.figure()
         plt.scatter(np.real(out_data), np.imag(out_data), label="res")
-        plt.scatter(np.real(ref_samples), np.imag(ref_samples), label="ref")
+        # plt.scatter(np.real(ref_samples), np.imag(ref_samples), label="ref")
         plt.ylim([-0.1, 0.1])
         plt.show()

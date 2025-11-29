@@ -82,8 +82,8 @@ plt.legend()
 plt.grid()
 plt.show()
 
-start_sample = 69000
-end_sample = 85500
+start_sample = 494500
+end_sample = 510500
 
 # np.save(
 #     "receive_signal/src/trim_s" + str(start_sample) + "_e" + str(end_sample) + "_fs" + str(fs_hz_new) + ".npy",

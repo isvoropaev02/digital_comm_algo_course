@@ -18,6 +18,8 @@ class PreambuleDetector:
         a0_idx, a1_idx = tuple(self.__get_preambule_a_start_pos(in_signal))
         if (a1_idx - a0_idx) != self.__samples_per_symb * 127:
             print("[WARNING] samples_per_symb*127 not equal to a1_idx-a0_idx")
+            print("[WARNING] a1_idx is set to a0_idx + 127*num_samples_per_symb")
+            a1_idx = a0_idx + 127 * self.__samples_per_symb
 
         m_shift = self.__get_preambule_m_shift(in_signal, start_sample_id=a1_idx)  # for corr with [M, M]
         id_shift = np.argmin(np.abs(m_shift - M_SHIFT_LUT))
