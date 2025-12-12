@@ -49,6 +49,36 @@ blocks:
     coordinate: [616, 12.0]
     rotation: 0
     state: enabled
+- name: eitbg
+  id: variable_qtgui_chooser
+  parameters:
+    comment: ''
+    gui_hint: ''
+    label: ''
+    label0: 90.1 (rds)
+    label1: 89.7 (rds)
+    label2: 93.7 (rds)
+    label3: '88.0'
+    label4: '92.9'
+    labels: '[]'
+    num_opts: '5'
+    option0: '90100000'
+    option1: '89700000'
+    option2: '93700000'
+    option3: '8800000'
+    option4: '92900000'
+    options: '[0, 1, 2]'
+    orient: Qt.QVBoxLayout
+    type: real
+    value: '90100000'
+    widget: combo_box
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [912, 12.0]
+    rotation: 0
+    state: disabled
 - name: f_central
   id: variable_qtgui_entry
   parameters:
@@ -78,7 +108,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [952, 20.0]
+    coordinate: [768, 12.0]
     rotation: 0
     state: enabled
 - name: samp_rate
@@ -107,6 +137,23 @@ blocks:
     bus_source: false
     bus_structure: null
     coordinate: [464, 12.0]
+    rotation: 0
+    state: enabled
+- name: analog_fm_deemph_0
+  id: analog_fm_deemph
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    samp_rate: int(samp_rate/200)
+    tau: 75e-6
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1600, 324.0]
     rotation: 0
     state: enabled
 - name: analog_wfm_rcv_0
@@ -140,7 +187,24 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1352, 336.0]
+    coordinate: [1440, 192.0]
+    rotation: 0
+    state: disabled
+- name: audio_sink_0_0
+  id: audio_sink
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    device_name: ''
+    num_inputs: '1'
+    ok_to_block: 'True'
+    samp_rate: int(samp_rate/200)
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1808, 336.0]
     rotation: 0
     state: enabled
 - name: blocks_file_sink_0
@@ -160,7 +224,7 @@ blocks:
     bus_structure: null
     coordinate: [832, 428.0]
     rotation: 0
-    state: enabled
+    state: disabled
 - name: blocks_multiply_const_vxx_0
   id: blocks_multiply_const_vxx
   parameters:
@@ -201,6 +265,30 @@ blocks:
     bus_source: false
     bus_structure: null
     coordinate: [608, 288.0]
+    rotation: 0
+    state: enabled
+- name: low_pass_filter_0_0
+  id: low_pass_filter
+  parameters:
+    affinity: ''
+    alias: ''
+    beta: '6.76'
+    comment: ''
+    cutoff_freq: '17000'
+    decim: '1'
+    gain: '1'
+    interp: '1'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    samp_rate: int(samp_rate/200)
+    type: fir_filter_fff
+    width: '1000'
+    win: window.WIN_HAMMING
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1368, 288.0]
     rotation: 0
     state: enabled
 - name: qtgui_freq_sink_x_0_0
@@ -345,6 +433,67 @@ blocks:
     coordinate: [1104, 444.0]
     rotation: 0
     state: enabled
+- name: qtgui_waterfall_sink_x_0_0
+  id: qtgui_waterfall_sink_x
+  parameters:
+    affinity: ''
+    alias: ''
+    alpha1: '1.0'
+    alpha10: '1.0'
+    alpha2: '1.0'
+    alpha3: '1.0'
+    alpha4: '1.0'
+    alpha5: '1.0'
+    alpha6: '1.0'
+    alpha7: '1.0'
+    alpha8: '1.0'
+    alpha9: '1.0'
+    axislabels: 'True'
+    bw: int(samp_rate/200)
+    color1: '0'
+    color10: '0'
+    color2: '0'
+    color3: '0'
+    color4: '0'
+    color5: '0'
+    color6: '0'
+    color7: '0'
+    color8: '0'
+    color9: '0'
+    comment: ''
+    fc: '0'
+    fftsize: '1024'
+    freqhalf: 'False'
+    grid: 'False'
+    gui_hint: ''
+    int_max: '10'
+    int_min: '-140'
+    label1: ''
+    label10: ''
+    label2: ''
+    label3: ''
+    label4: ''
+    label5: ''
+    label6: ''
+    label7: ''
+    label8: ''
+    label9: ''
+    legend: 'True'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    name: '"Demod output"'
+    nconnections: '1'
+    showports: 'False'
+    type: float
+    update_time: '0.10'
+    wintype: window.WIN_BLACKMAN_hARRIS
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1808, 420.0]
+    rotation: 0
+    state: disabled
 - name: rational_resampler_xxx_0
   id: rational_resampler_xxx
   parameters:
@@ -803,12 +952,16 @@ blocks:
     state: enabled
 
 connections:
+- [analog_fm_deemph_0, '0', audio_sink_0_0, '0']
+- [analog_fm_deemph_0, '0', qtgui_waterfall_sink_x_0_0, '0']
 - [analog_wfm_rcv_0, '0', qtgui_waterfall_sink_x_0, '0']
 - [analog_wfm_rcv_0, '0', rational_resampler_xxx_0, '0']
 - [blocks_multiply_const_vxx_0, '0', low_pass_filter_0, '0']
 - [low_pass_filter_0, '0', analog_wfm_rcv_0, '0']
 - [low_pass_filter_0, '0', blocks_file_sink_0, '0']
+- [low_pass_filter_0_0, '0', analog_fm_deemph_0, '0']
 - [rational_resampler_xxx_0, '0', audio_sink_0, '0']
+- [rational_resampler_xxx_0, '0', low_pass_filter_0_0, '0']
 - [uhd_usrp_source_0, '0', blocks_multiply_const_vxx_0, '0']
 - [uhd_usrp_source_0, '0', qtgui_freq_sink_x_0_0, '0']
 
