@@ -30,6 +30,20 @@ class OFDMModem:
         td_signal = np.fft.ifft(fft_samples, norm="ortho")
         return np.concat([td_signal[len(td_signal) - cp_len :], td_signal])
 
+    def ofdm_modulate_sum_sin(self, samples: np.ndarray, fs_hz: int = -1, scs_hz: int = 15) -> np.ndarray:
+        if fs_hz == -1:
+            nfft = self.__num_sc
+            cp_len = self.__cp_len
+        else:
+            nfft = int(fs_hz / scs_hz)
+            cp_len = int(nfft * 0.2)
+
+        f_arr = np.arange(-self.__num_sc // 2, self.__num_sc // 2, 1)
+        t_arr = np.arange(0, nfft, 1)
+        sinusoids = np.exp(1j * 2 * np.pi * np.outer(f_arr, t_arr) / nfft) / np.sqrt(samples.shape[0])
+        td_signal = np.dot(samples, sinusoids)
+        return np.concat([td_signal[len(td_signal) - cp_len :], td_signal])
+
     def ofdm_demodulate(self, signal: np.ndarray, fs_hz: int = -1, scs_hz: int = 15) -> np.ndarray:
         # trimed_signal = signal[(self.__cp_len // 2) : len(signal) + (-self.__cp_len // 2)]
         if fs_hz == -1:
