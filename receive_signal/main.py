@@ -22,7 +22,7 @@ time_s = np.arange(in_rx_signal.shape[0]) / cfg.fs_hz
 # clock synchronization / data rate and interleaver derivation
 pr_dec_out_signal, data_rate, interleaver_dur, shift = preamb_detector.process(in_rx_signal)
 # plot_signal(pr_dec_out_signal)
-print("interl_dur: ", interleaver_dur, " data_rate: ", data_rate)
+print("interl_dur: ", interleaver_dur, " data_rate: ", data_rate, "shift: ", shift)
 print("pr_detected_signal_shape: ", pr_dec_out_signal.shape)
 print("num_eq_in_samples: ", int(interleaver_dur / 25 * 45))
 
